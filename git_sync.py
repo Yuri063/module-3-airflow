@@ -17,7 +17,7 @@ default_args = {
 }
 
 dag = DAG(
-    'git_sync_start_2021023',
+    'git_sync_start_20210223',
     default_args=default_args,
     description='A simple tutorial DAG',
     catchup=False,
