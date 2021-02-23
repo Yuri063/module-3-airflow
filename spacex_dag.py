@@ -34,7 +34,7 @@ t1 >> t2
 '''
 
 for rocket in ('falcon1', 'falcon9', 'falconheavy', 'all'):
-    params = {"rocket": rocket} # falcon1/falcon9/falconheavy/all
+    params = {"rocket": rocket if rocket !='all' else ''} # falcon1/falcon9/falconheavy/all
     t1 = BashOperator(
         task_id="get_data." + rocket, 
         bash_command="python3 /root/airflow/dags/spacex/load_launches.py -y {{ execution_date.year }} -r {{ params.rocket }} -o /var/data", 
