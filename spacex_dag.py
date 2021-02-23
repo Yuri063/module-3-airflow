@@ -38,14 +38,14 @@ for rocket in ('falcon1', 'falcon9', 'falconheavy', 'all'):
     t1 = BashOperator(
         task_id="get_data." + rocket, 
         bash_command="python3 /root/airflow/dags/spacex/load_launches.py -y {{ execution_date.year }} -r {{ params.rocket }} -o /var/data", 
-        params=params
+        params=params,
         dag=dag
     )
     
     t2 = BashOperator(
         task_id="print_data." + rocket, 
         bash_command="cat /var/data/year={{ execution_date.year }}/rocket={{ params.rocket }}/data.csv", 
-        params=params
+        params=params,
         dag=dag
     )
     t1 >> t2
