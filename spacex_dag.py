@@ -42,6 +42,7 @@ for rocket in ('falcon1', 'falcon9', 'falconheavy', 'all'):
         params=params,
         dag=dag
     )
+    print(bash_command)
     
     t2 = BashOperator(
         task_id="print_data." + rocket, 
