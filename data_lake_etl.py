@@ -61,7 +61,7 @@ dm = DataProcHiveOperator(
     dag=dag,
     query= = """
                insert overwrite table dm.traffic  
-               select user_id, min(bytes_received), max(bytes_received), avg(bytes_received)
+               select user_id, min(bytes_received), max(bytes_received), avg(bytes_received), '{{ execution_date.year }}'
                  from ods.traffic partition (year='{{ execution_date.year }}') group by user_id;   
             """,
     cluster_name='cluster-dataproc',
