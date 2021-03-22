@@ -59,11 +59,11 @@ for task in tasks:
 dm = DataProcHiveOperator(
     task_id='dm_traffic',
     dag=dag,
-    query= = """
+    query="""
                insert overwrite table dm.traffic  
                select user_id, max(bytes_received), min(bytes_received), avg(bytes_received), '{{ execution_date.year }}'
                  from ods.traffic partition (year='{{ execution_date.year }}') group by user_id;   
-            """,
+          """,
     cluster_name='cluster-dataproc',
     region='us-central1',
 )
