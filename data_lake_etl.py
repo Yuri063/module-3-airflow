@@ -21,37 +21,50 @@ dag = DAG(
     description='Data Lake ETL tasks',
     schedule_interval="0 0 1 1 *",
 )
-
-for task in ('traffic', 'billing', 'issue', 'payment'):
+tasks = ('traffic', 'billing', 'issue', 'payment')
+ods = []
+for task in tasks:
     if task == 'traffic':
-        query="""
+        query = """
                insert overwrite table ods.traffic partition (year='{{ execution_date.year }}') 
                select user_id, cast(from_unixtime(`timestamp` div 1000) as TIMESTAMP), device_id, device_ip_addr, bytes_sent, bytes_received 
                       from stg.traffic where year(from_unixtime(`timestamp` div 1000)) = {{ execution_date.year }};   
             """
     elif task == 'billing':
-        query="""
+        query = """
                insert overwrite table ods.billing partition (year='{{ execution_date.year }}') 
                select user_id, billing_period, service, tariff, cast(sum as DECIMAL(10,2)), cast(created_at as TIMESTAMP) 
                       from stg.billing where year(created_at) = {{ execution_date.year }};   
             """
     elif task == 'issue':
-        query="""
+        query = """
                insert overwrite table ods.issue partition (year='{{ execution_date.year }}') 
                select cast(user_id as INT), cast(start_time as TIMESTAMP), cast(end_time as TIMESTAMP), title, description, service 
                       from stg.issue where year(start_time) = {{ execution_date.year }};   
             """
     elif task == 'payment':
-        query="""
+        query = """
                insert overwrite table ods.payment partition (year='{{ execution_date.year }}') 
-               user_id INT, pay_doc_type STRING, pay_doc_num BIGINT,  account STRING, phone STRING, billing_period STRING, pay_date DATE, sum DECIMAL(10,2)
                select user_id, pay_doc_type, pay_doc_num, account, phone, billing_period, cast(pay_date as DATE), cast(sum as DECIMAL(10,2))
                  from stg.payment where year(pay_date) = {{ execution_date.year }};   
             """
-    ods = DataProcHiveOperator(
+    ods.append(DataProcHiveOperator(
         task_id='ods_' + task,
         dag=dag,
         query=query,
         cluster_name='cluster-dataproc',
         region='us-central1',
-    )
+    ))
+    
+dm = DataProcHiveOperator(
+    task_id='dm_traffic',
+    dag=dag,
+    query= = """
+               insert overwrite table dm.traffic  
+               select user_id, min(bytes_received), max(bytes_received), avg(bytes_received)
+                 from ods.traffic partition (year='{{ execution_date.year }}') group by user_id;   
+            """,
+    cluster_name='cluster-dataproc',
+    region='us-central1',
+)
+ods >> dm
