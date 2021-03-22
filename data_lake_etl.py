@@ -22,12 +22,13 @@ dag = DAG(
     schedule_interval="0 0 1 1 *",
 )
 
-ods_billing = DataProcHiveOperator(
-    task_id='ods_billing',
+ods_traffic = DataProcHiveOperator(
+    task_id='ods_traffic',
     dag=dag,
     query="""
-        insert overwrite table ods.billing partition (year='{{ execution_date.year }}') 
-        select * from stg.billing where year(from_unixtime(`timestamp` div 1000)) = {{ execution_date.year }};
+        insert overwrite table ods.traffic partition (year='{{ execution_date.year }}') 
+        select user_id, cast(from_unixtime(`timestamp` div 1000) as timestamp), device_id, device_ip_addr, bytes_sent, bytes_received 
+               from stg.traffic where year(from_unixtime(`timestamp` div 1000)) = {{ execution_date.year }};   
     """,
     cluster_name='cluster-dataproc',
     region='us-central1',
