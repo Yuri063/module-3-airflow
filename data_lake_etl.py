@@ -12,7 +12,7 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(seconds=20),
+    'retry_delay': timedelta(seconds=120),
 }
 
 dag = DAG(
