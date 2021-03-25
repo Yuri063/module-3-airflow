@@ -7,7 +7,7 @@ from airflow.contrib.operators.dataproc_operator import DataProcHiveOperator
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2012, 1, 1, 0, 0, 0),
+    'start_date': datetime(2013, 1, 1, 0, 0, 0),
     'email': ['airflow@example.com'],
     'email_on_failure': False,
     'email_on_retry': False,
@@ -61,8 +61,8 @@ dm = DataProcHiveOperator(
     dag=dag,
     query="""
                insert overwrite table dm.traffic  
-               select user_id, max(bytes_received), min(bytes_received), avg(bytes_received), '{{ execution_date.year }}'
-                 from ods.traffic where year = {{ execution_date.year }} group by user_id;   
+               select user_id, max(bytes_received), min(bytes_received), round(avg(bytes_received)) as avg_traf, '{{ execution_date.year }}'
+                 from ods.traffic where year = {{ execution_date.year }} group by user_id order by avg_traf;   
           """,
     cluster_name='cluster-dataproc',
     region='us-central1',
