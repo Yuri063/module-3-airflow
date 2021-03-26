@@ -60,8 +60,8 @@ dm = DataProcHiveOperator(
     task_id='dm_traffic',
     dag=dag,
     query="""
-               insert overwrite table dm.traffic  
-               select user_id, max(bytes_received), min(bytes_received), round(avg(bytes_received)) as avg_traf, '{{ execution_date.year }}'
+               insert overwrite table dm.traffic partition (year='{{ execution_date.year }}')  
+               select user_id, max(bytes_received), min(bytes_received), round(avg(bytes_received)) as avg_traf
                  from ods.traffic where year = {{ execution_date.year }} group by user_id order by avg_traf;   
           """,
     cluster_name='cluster-dataproc',
