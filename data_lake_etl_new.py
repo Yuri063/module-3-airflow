@@ -4,6 +4,7 @@ from random import randint
 from airflow import DAG
 from airflow.contrib.operators.dataproc_operator import DataProcHiveOperator
 
+username = 'yfurman'
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -16,7 +17,7 @@ default_args = {
 }
 
 dag = DAG(
-    'data_lake_etl_new',
+    username + '.data_lake_etl_new',
     default_args=default_args,
     description='Data Lake ETL tasks',
     schedule_interval="0 0 1 1 *",
@@ -53,7 +54,7 @@ for task in tasks:
         dag=dag,
         query=query,
         cluster_name='cluster-dataproc',
-        region='us-central1',
+        region='europe-west3-a',
     ))
     
 dm = DataProcHiveOperator(
@@ -65,6 +66,6 @@ dm = DataProcHiveOperator(
                  from yfurman.ods_traffic where year = {{ execution_date.year }} group by user_id order by avg_traf;   
           """,
     cluster_name='cluster-dataproc',
-    region='us-central1',
+    region='europe-west3-a',
 )
 ods >> dm
