@@ -56,7 +56,7 @@ for task in tasks:
         job_name=username + '_{{ execution_date.year }}_ods_' + task + '_{{ params.job_suffix }}',
         params={"job_suffix": randint(0, 100000)},
         cluster_name='cluster-dataproc',
-        region='europe-west3-a',
+        region='europe-west3',
     ))
     
 dm = DataProcHiveOperator(
@@ -70,6 +70,6 @@ dm = DataProcHiveOperator(
     job_name=username + '_{{ execution_date.year }}_dm_traffic_{{ params.job_suffix }}',
     params={"job_suffix": randint(0, 100000)},
     cluster_name='cluster-dataproc',
-    region='europe-west3-a',
+    region='europe-west3',
 )
 ods >> dm
