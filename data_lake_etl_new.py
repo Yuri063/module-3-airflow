@@ -3,7 +3,7 @@ from random import randint
 
 from airflow import DAG
 from airflow.contrib.operators.dataproc_operator import DataProcHiveOperator
-
+# test for cron :)
 username = 'yfurman'
 default_args = {
     'owner': username,
