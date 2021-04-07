@@ -53,6 +53,8 @@ for task in tasks:
         task_id='ods_' + task,
         dag=dag,
         query=query,
+        job_name=username + '_{{ execution_date.year }}_ods_' + task + '_{{ params.job_suffix }}',
+        params={"job_suffix": randint(0, 100000)},
         cluster_name='cluster-dataproc',
         region='europe-west3-a',
     ))
@@ -65,6 +67,8 @@ dm = DataProcHiveOperator(
                select user_id, max(bytes_received), min(bytes_received), round(avg(bytes_received)) as avg_traf
                  from yfurman.ods_traffic where year = {{ execution_date.year }} group by user_id order by avg_traf;   
           """,
+    job_name=username + '_{{ execution_date.year }}_dm_traffic_{{ params.job_suffix }}',
+    params={"job_suffix": randint(0, 100000)},
     cluster_name='cluster-dataproc',
     region='europe-west3-a',
 )
