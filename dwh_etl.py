@@ -428,6 +428,6 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                   dag=dag,
                   sql=query
               ))
-          all_satellites_loaded = DummyOperator(task_id="all_satellites_loaded", dag=dag)
+          #all_satellites_loaded = DummyOperator(task_id="all_satellites_loaded", dag=dag)
         
 view_payment_one_year >> hubs >> all_hubs_loaded >> links >> all_links_loaded >> satellites
