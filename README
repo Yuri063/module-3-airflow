@@ -1,5 +1,6 @@
 spacex  - folder with scripts for SpaceX
 data_lake_etl.py  - DAG with scripts (HiveQL) for DATA_LAKE_ETL - OLD infrastructure
 data_lake_etl_new.py  - DAG with scripts (HiveQL) for DATA_LAKE_ETL - NEW infrastructure
+dwh_etl.py  - DAG with scripts (SQL) for DATA_WAREHOUSE_ETL - NEW infrastructure
 git_sync.py - DAG to sync with github
 spacex_dag.py - DAG for SpaceX
