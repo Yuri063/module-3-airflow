@@ -138,7 +138,7 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
           for task in ('HUB_USER', 'HUB_ACCOUNT', 'HUB_BILLING_PERIOD', 'HUB_PAY_DOC'):
               query = ''
               if task == 'HUB_USER':
-                  qeury = """
+                  query = """
                           with row_rank_1 as (
                               select * from (
                                 select USER_PK, USER_KEY, LOAD_DATE, RECORD_SOURCE, pay_date,
