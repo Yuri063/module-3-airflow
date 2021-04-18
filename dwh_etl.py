@@ -28,7 +28,7 @@ view_payment_one_year = PostgresOperator(
     task_id="view_payment_one_year",
     dag=dag,
     sql="""
-          create or replace view yfurman.view_payment_one_year as (
+          create or replace view yfurman.view_payment_'{{ execution_date.year }}' as (
             with staging as (
               with derived_columns as (
                 select
@@ -430,4 +430,12 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
               ))
           #all_satellites_loaded = DummyOperator(task_id="all_satellites_loaded", dag=dag)
         
-view_payment_one_year >> hubs >> all_hubs_loaded >> links >> all_links_loaded >> satellites
+drop_view_payment_one_year = PostgresOperator(
+    task_id="drop_view_payment_one_year",
+    dag=dag,
+    sql="""
+          drop view if exists yfurman.view_payment_'{{ execution_date.year }}';
+        """
+)
+        
+view_payment_one_year >> hubs >> all_hubs_loaded >> links >> all_links_loaded >> satellites >> drop_view_payment_one_year
