@@ -137,7 +137,7 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
           hubs = []
           for task in ('HUB_USER', 'HUB_ACCOUNT', 'HUB_BILLING_PERIOD', 'HUB_PAY_DOC'):
               if task == 'HUB_USER':
-                  query = """
+                  qeury = """
                           with row_rank_1 as (
                               select * from (
                                 select USER_PK, USER_KEY, LOAD_DATE, RECORD_SOURCE, pay_date,
@@ -236,10 +236,10 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                             from records_to_insert
                           );
                       """
-              hubs.append(DataProcHiveOperator(
+              hubs.append(PostgresOperator(
                   task_id='dds_hubs_' + task,
                   dag=dag,
-                  sql=sql
+                  sql=query
               ))
           all_hubs_loaded = DummyOperator(task_id="all_hubs_loaded", dag=dag)
     
@@ -296,10 +296,10 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                           );
                       """
                      
-              links.append(DataProcHiveOperator(
+              links.append(PostgresOperator(
                   task_id='dds_links_' + task,
                   dag=dag,
-                  sql=sql
+                  sql=query
               ))
           all_links_loaded = DummyOperator(task_id="all_links_loaded", dag=dag)
 
@@ -420,10 +420,10 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                             );                  
                       """
                      
-              satellites.append(DataProcHiveOperator(
+              satellites.append(PostgresOperator(
                   task_id='dds_satellites_' + task,
                   dag=dag,
-                  sql=sql
+                  sql=query
               ))
           all_satellites_loaded = DummyOperator(task_id="all_satellites_loaded", dag=dag)
         
