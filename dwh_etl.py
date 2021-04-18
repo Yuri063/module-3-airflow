@@ -136,6 +136,7 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
     if phase == 'HUB':
           hubs = []
           for task in ('HUB_USER', 'HUB_ACCOUNT', 'HUB_BILLING_PERIOD', 'HUB_PAY_DOC'):
+              query = ''
               if task == 'HUB_USER':
                   qeury = """
                           with row_rank_1 as (
@@ -247,6 +248,7 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
     elif phase == 'LINK':
           links = []
           for task in ('LINK_USER_ACCOUNT', 'LINK_ACCOUNT_BILLING_PAY'):
+              query = ''            
               if task == 'LINK_USER_ACCOUNT':
                   query = """
                           with records_to_insert as (
@@ -307,6 +309,7 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
     elif phase == 'SATELLITE':
           satellites = []
           for task in ('SAT_USER_DETAILS', 'SAT_PAY_DOC_DETAILS'):
+              query = ''            
               if task == 'SAT_USER_DETAILS':
                   query = """
                             with source_data as (
