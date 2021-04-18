@@ -238,15 +238,15 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                             from records_to_insert
                           );
                       """
-              dds.append(DataProcHiveOperator(
-                  task_id='dds_' + task,
+              hubs.append(DataProcHiveOperator(
+                  task_id='dds_hubs_' + task,
                   dag=dag,
                   sql=sql
               ))
           all_hubs_loaded = DummyOperator(task_id="all_hubs_loaded", dag=dag)
     
     # Load LINKs
-    if phase == 'LINK':
+    elif phase == 'LINK':
           tasks = ('LINK_USER_ACCOUNT', 'LINK_ACCOUNT_BILLING_PAY')
           links = []
           for task in tasks:
@@ -299,11 +299,136 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                           );
                       """
                      
-              dds.append(DataProcHiveOperator(
-                  task_id='dds_' + task,
+              links.append(DataProcHiveOperator(
+                  task_id='dds_links_' + task,
                   dag=dag,
                   sql=sql
               ))
           all_links_loaded = DummyOperator(task_id="all_links_loaded", dag=dag)
 
-
+    # Load SATELLITEs
+    elif phase == 'SATELLITE':
+          tasks = ('SAT_USER_DETAILS', 'SAT_PAY_DOC_DETAILS')
+          satellites = []
+          for task in tasks:
+              if task == 'SAT_USER_DETAILS':
+                  query = """
+                            with source_data as (
+                                select 
+                                    USER_PK, USER_HASHDIFF, 
+                                    phone, 
+                                    EFFECTIVE_FROM, 
+                                    LOAD_DATE, RECORD_SOURCE
+                                from yfurman.view_payment_one_year
+                            ),                  
+                            update_records as (
+                                select 
+                                    a.USER_PK, a.USER_HASHDIFF, 
+                                    a.phone, 
+                                    a.EFFECTIVE_FROM, 
+                                    a.LOAD_DATE, a.RECORD_SOURCE
+                                from yfurman.dds_sat_user_details as a
+                                join source_data as b
+                                on a.USER_PK = b.USER_PK
+                            ),
+                            latest_records as (
+                                select * from (
+                                    select USER_PK, USER_HASHDIFF, LOAD_DATE,
+                                        case when rank() over (partition by USER_PK order by LOAD_DATE desc) = 1
+                                            then 'Y' 
+                                            else 'N'
+                                        end as latest
+                                    from update_records
+                                ) as s
+                                where latest = 'Y'
+                            ),	
+                            records_to_insert as (
+                                select distinct 
+                                    e.USER_PK, e.USER_HASHDIFF, 
+                                    e.phone, 
+                                    e.EFFECTIVE_FROM, 
+                                    e.LOAD_DATE, e.RECORD_SOURCE
+                                from source_data as e
+                                left join latest_records
+                                on latest_records.USER_HASHDIFF = e.USER_HASHDIFF
+                                where latest_records.USER_HASHDIFF is NULL
+                            )	
+                            insert into yfurman.dds_sat_user_details (
+                                USER_PK, USER_HASHDIFF, 
+                                phone, 
+                                EFFECTIVE_FROM, 
+                                LOAD_DATE, RECORD_SOURCE)
+                            (
+                                select 
+                                    USER_PK, USER_HASHDIFF, 
+                                    phone, 
+                                    EFFECTIVE_FROM, 
+                                    LOAD_DATE, RECORD_SOURCE
+                                from records_to_insert
+                            );                  
+                      """
+              elif task == 'SAT_PAY_DOC_DETAILS':
+                  query = """
+                            with source_data as (
+                                select 
+                                    PAY_DOC_PK, PAY_DOC_HASHDIFF, 
+                                    pay_date, sum, 
+                                    EFFECTIVE_FROM, 
+                                    LOAD_DATE, RECORD_SOURCE
+                                from yfurman.view_payment_one_year                            
+                            ),
+                            update_records as (
+                                select 
+                                    a.PAY_DOC_PK, a.PAY_DOC_HASHDIFF, 
+                                    a.pay_date, a.sum,
+                                    a.EFFECTIVE_FROM, 
+                                    a.LOAD_DATE, a.RECORD_SOURCE
+                                from yfurman.dds_sat_pay_doc_details as a
+                                join source_data as b
+                                on a.PAY_DOC_PK = b.PAY_DOC_PK
+                            ),
+                            latest_records as (
+                                select * from (
+                                    select PAY_DOC_PK, PAY_DOC_HASHDIFF, LOAD_DATE,
+                                        case when rank() over (partition by PAY_DOC_PK order by LOAD_DATE desc) = 1
+                                            then 'Y' 
+                                            else 'N'
+                                        end as latest
+                                    from update_records
+                                ) as s
+                                where latest = 'Y'
+                            ),	
+                            records_to_insert as (
+                                select distinct 
+                                    e.PAY_DOC_PK, e.PAY_DOC_HASHDIFF, 
+                                    e.pay_date, e.sum,
+                                    e.EFFECTIVE_FROM, 
+                                    e.LOAD_DATE, e.RECORD_SOURCE
+                                from source_data as e
+                                left join latest_records
+                                on latest_records.PAY_DOC_HASHDIFF = e.PAY_DOC_HASHDIFF
+                                where latest_records.PAY_DOC_HASHDIFF is NULL
+                            )	
+                            insert into yfurman.dds_sat_pay_doc_details (
+                                PAY_DOC_PK, PAY_DOC_HASHDIFF, 
+                                pay_date, sum, 
+                                EFFECTIVE_FROM, 
+                                LOAD_DATE, RECORD_SOURCE)
+                            (
+                                select 
+                                    PAY_DOC_PK, PAY_DOC_HASHDIFF, 
+                                    pay_date, sum, 
+                                    EFFECTIVE_FROM, 
+                                    LOAD_DATE, RECORD_SOURCE
+                                from records_to_insert
+                            );                  
+                      """
+                     
+              satellites.append(DataProcHiveOperator(
+                  task_id='dds_satellites_' + task,
+                  dag=dag,
+                  sql=sql
+              ))
+          all_satellites_loaded = DummyOperator(task_id="all_satellites_loaded", dag=dag)
+        
+view_payment_one_year >> hubs >> all_hubs_loaded >> links >> all_links_loaded >> satellites
