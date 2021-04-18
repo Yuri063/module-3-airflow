@@ -2,7 +2,8 @@ from datetime import timedelta, datetime
 from random import randint
 
 from airflow import DAG
-from airflow.contrib.operators.dataproc_operator import DataProcHiveOperator
+from airflow.operators.postgres_operator import PostgresOperator
+from airflow.operators.dummy_operator import DummyOperator
 
 username = 'yfurman'
 default_args = {
@@ -28,7 +29,6 @@ view_payment_one_year = PostgresOperator(
     dag=dag,
     sql="""
           create or replace view yfurman.view_payment_one_year as (
-
             with staging as (
               with derived_columns as (
                 select
@@ -93,7 +93,7 @@ view_payment_one_year = PostgresOperator(
                   )) as TEXT) as PAY_DOC_HASHDIFF
                 from derived_columns
               ),
-
+              
               columns_to_select as (
                 select
                   user_id,
@@ -120,10 +120,9 @@ view_payment_one_year = PostgresOperator(
                   PAY_DOC_HASHDIFF
                 from hashed_columns
               )
-
               select * from columns_to_select
             )
-
+            
             select *, 
                 current_timestamp as LOAD_DATE,
                 pay_date as EFFECTIVE_FROM
@@ -135,9 +134,8 @@ view_payment_one_year = PostgresOperator(
 for phase in ('HUB', 'LINK', 'SATELLITE'):
     # Load HUBs
     if phase == 'HUB':
-          tasks = ('HUB_USER', 'HUB_ACCOUNT', 'HUB_BILLING_PERIOD', 'HUB_PAY_DOC')
           hubs = []
-          for task in tasks:
+          for task in ('HUB_USER', 'HUB_ACCOUNT', 'HUB_BILLING_PERIOD', 'HUB_PAY_DOC'):
               if task == 'HUB_USER':
                   query = """
                           with row_rank_1 as (
@@ -247,9 +245,8 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
     
     # Load LINKs
     elif phase == 'LINK':
-          tasks = ('LINK_USER_ACCOUNT', 'LINK_ACCOUNT_BILLING_PAY')
           links = []
-          for task in tasks:
+          for task in ('LINK_USER_ACCOUNT', 'LINK_ACCOUNT_BILLING_PAY'):
               if task == 'LINK_USER_ACCOUNT':
                   query = """
                           with records_to_insert as (
@@ -308,9 +305,8 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
 
     # Load SATELLITEs
     elif phase == 'SATELLITE':
-          tasks = ('SAT_USER_DETAILS', 'SAT_PAY_DOC_DETAILS')
           satellites = []
-          for task in tasks:
+          for task in ('SAT_USER_DETAILS', 'SAT_PAY_DOC_DETAILS'):
               if task == 'SAT_USER_DETAILS':
                   query = """
                             with source_data as (
