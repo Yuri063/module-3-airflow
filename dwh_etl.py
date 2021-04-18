@@ -28,7 +28,7 @@ view_payment_one_year = PostgresOperator(
     task_id="view_payment_one_year",
     dag=dag,
     sql="""
-          create or replace view yfurman.view_payment_'{{ execution_date.year }}' as (
+          create or replace view yfurman.view_payment_{{ execution_date.year }} as (
             with staging as (
               with derived_columns as (
                 select
@@ -146,7 +146,7 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                                     partition by USER_PK
                                     order by LOAD_DATE ASC
                                   ) as row_num
-                                from yfurman.view_payment_one_year  		
+                                from yfurman.view_payment_{{ execution_date.year }}  		
                               ) as h where row_num = 1
                             ),	
                           records_to_insert as (
@@ -171,7 +171,7 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                                     partition by ACCOUNT_PK
                                     order by LOAD_DATE ASC
                                   ) as row_num
-                                from yfurman.view_payment_one_year  		
+                                from yfurman.view_payment_{{ execution_date.year }}  		
                               ) as h where row_num = 1
                             ),	
                           records_to_insert as (
@@ -196,7 +196,7 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                                     partition by BILLING_PERIOD_PK
                                     order by LOAD_DATE ASC
                                   ) as row_num
-                                from yfurman.view_payment_one_year  		
+                                from yfurman.view_payment_{{ execution_date.year }}
                               ) as h where row_num = 1
                             ),	
                           records_to_insert as (
@@ -221,7 +221,7 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                                     partition by PAY_DOC_PK
                                     order by LOAD_DATE ASC
                                   ) as row_num
-                                from yfurman.view_payment_one_year  		
+                                from yfurman.view_payment_{{ execution_date.year }}
                               ) as h where row_num = 1
                             ),	
                           records_to_insert as (
@@ -256,7 +256,7 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                                   stg.USER_ACCOUNT_PK, 
                                   stg.USER_PK, stg.ACCOUNT_PK, 
                                   stg.LOAD_DATE, stg.RECORD_SOURCE
-                              from yfurman.view_payment_one_year as stg 
+                              from yfurman.view_payment_{{ execution_date.year }} as stg 
                               left join yfurman.dds_link_user_account as tgt
                               on stg.USER_ACCOUNT_PK = tgt.USER_ACCOUNT_PK
                               where tgt.USER_ACCOUNT_PK is null		
@@ -280,7 +280,7 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                                   stg.ACCOUNT_BILLING_PAY_PK, 
                                   stg.ACCOUNT_PK, stg.BILLING_PERIOD_PK, stg.PAY_DOC_PK, 
                                   stg.LOAD_DATE, stg.RECORD_SOURCE
-                              from yfurman.view_payment_one_year as stg 
+                              from yfurman.view_payment_{{ execution_date.year }} as stg 
                               left join yfurman.dds_link_account_billing_pay as tgt
                               on stg.ACCOUNT_BILLING_PAY_PK = tgt.ACCOUNT_BILLING_PAY_PK
                               where tgt.ACCOUNT_BILLING_PAY_PK is null		
@@ -318,7 +318,7 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                                     phone, 
                                     EFFECTIVE_FROM, 
                                     LOAD_DATE, RECORD_SOURCE
-                                from yfurman.view_payment_one_year
+                                from yfurman.view_payment_{{ execution_date.year }}
                             ),                  
                             update_records as (
                                 select 
@@ -374,7 +374,7 @@ for phase in ('HUB', 'LINK', 'SATELLITE'):
                                     pay_date, sum, 
                                     EFFECTIVE_FROM, 
                                     LOAD_DATE, RECORD_SOURCE
-                                from yfurman.view_payment_one_year                            
+                                from yfurman.view_payment_{{ execution_date.year }}                            
                             ),
                             update_records as (
                                 select 
@@ -434,7 +434,7 @@ drop_view_payment_one_year = PostgresOperator(
     task_id="drop_view_payment_one_year",
     dag=dag,
     sql="""
-          drop view if exists yfurman.view_payment_'{{ execution_date.year }}';
+          drop view if exists yfurman.view_payment_{{ execution_date.year }};
         """
 )
         
