@@ -132,7 +132,8 @@ view_payment_one_year = PostgresOperator(
     """
 )
 
-for phase in ('HUB', "LINK', 'SATELLITE'):
+for phase in ('HUB', 'LINK', 'SATELLITE'):
+    # Load HUBs
     if phase == 'HUB':
           tasks = ('HUB_USER', 'HUB_ACCOUNT', 'HUB_BILLING_PERIOD', 'HUB_PAY_DOC')
           hubs = []
@@ -237,11 +238,72 @@ for phase in ('HUB', "LINK', 'SATELLITE'):
                             from records_to_insert
                           );
                       """
-              ods.append(DataProcHiveOperator(
+              dds.append(DataProcHiveOperator(
                   task_id='dds_' + task,
                   dag=dag,
                   sql=sql
               ))
           all_hubs_loaded = DummyOperator(task_id="all_hubs_loaded", dag=dag)
- 
+    
+    # Load LINKs
+    if phase == 'LINK':
+          tasks = ('LINK_USER_ACCOUNT', 'LINK_ACCOUNT_BILLING_PAY')
+          links = []
+          for task in tasks:
+              if task == 'LINK_USER_ACCOUNT':
+                  query = """
+                          with records_to_insert as (
+                              select distinct 
+                                  stg.USER_ACCOUNT_PK, 
+                                  stg.USER_PK, stg.ACCOUNT_PK, 
+                                  stg.LOAD_DATE, stg.RECORD_SOURCE
+                              from yfurman.view_payment_one_year as stg 
+                              left join yfurman.dds_link_user_account as tgt
+                              on stg.USER_ACCOUNT_PK = tgt.USER_ACCOUNT_PK
+                              where tgt.USER_ACCOUNT_PK is null		
+                          )
+                          insert into yfurman.dds_link_user_account (
+                              USER_ACCOUNT_PK,
+                              USER_PK, ACCOUNT_PK,
+                              LOAD_DATE, RECORD_SOURCE)
+                          (
+                              select 
+                                  USER_ACCOUNT_PK,
+                                  USER_PK, ACCOUNT_PK,
+                                  LOAD_DATE, RECORD_SOURCE
+                              from records_to_insert
+                          );
+                      """
+              elif task == 'LINK_ACCOUNT_BILLING_PAY':
+                  query = """
+                          with records_to_insert as (
+                              select distinct 
+                                  stg.ACCOUNT_BILLING_PAY_PK, 
+                                  stg.ACCOUNT_PK, stg.BILLING_PERIOD_PK, stg.PAY_DOC_PK, 
+                                  stg.LOAD_DATE, stg.RECORD_SOURCE
+                              from yfurman.view_payment_one_year as stg 
+                              left join yfurman.dds_link_account_billing_pay as tgt
+                              on stg.ACCOUNT_BILLING_PAY_PK = tgt.ACCOUNT_BILLING_PAY_PK
+                              where tgt.ACCOUNT_BILLING_PAY_PK is null		
+                          )
+                          insert into yfurman.dds_link_account_billing_pay (
+                              ACCOUNT_BILLING_PAY_PK,
+                              ACCOUNT_PK, BILLING_PERIOD_PK, PAY_DOC_PK,
+                              LOAD_DATE, RECORD_SOURCE)
+                          (
+                              select 
+                                  ACCOUNT_BILLING_PAY_PK,
+                                  ACCOUNT_PK, BILLING_PERIOD_PK, PAY_DOC_PK,
+                                  LOAD_DATE, RECORD_SOURCE
+                              from records_to_insert
+                          );
+                      """
+                     
+              dds.append(DataProcHiveOperator(
+                  task_id='dds_' + task,
+                  dag=dag,
+                  sql=sql
+              ))
+          all_links_loaded = DummyOperator(task_id="all_links_loaded", dag=dag)
+
 
