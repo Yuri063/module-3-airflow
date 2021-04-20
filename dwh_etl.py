@@ -396,7 +396,7 @@ dag = DAG(
     description='Data Warehouse ETL tasks',
     schedule_interval="0 0 1 1 *",
 )
-
+'''
 view_payment_one_year = PostgresOperator(
     task_id='LOAD_VIEW_PAYMENT_ONE_YEAR',
     dag=dag,
@@ -418,7 +418,7 @@ for phase in ('HUBS', 'LINKS', 'SATELLITES'):
     elif phase == 'SATELLITES':
         satellites = get_phase_context(phase)
         #all_satellites_loaded = DummyOperator(task_id="all_satellites_loaded", dag=dag)
-
+'''
 drop_view_payment_one_year = PostgresOperator(
     task_id="drop_view_payment_one_year",
     dag=dag,
@@ -426,4 +426,4 @@ drop_view_payment_one_year = PostgresOperator(
           drop view if exists yfurman.view_payment_{{ execution_date.year }};
         """
 )
-view_payment_one_year >> hubs >> all_hubs_loaded >> links >> all_links_loaded >> satellites >> drop_view_payment_one_year
+#view_payment_one_year >> hubs >> all_hubs_loaded >> links >> all_links_loaded >> satellites 
