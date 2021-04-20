@@ -364,7 +364,10 @@ SQL_CONTEXT = {
                             LOAD_DATE, RECORD_SOURCE
                         from records_to_insert
                     );                  
-            """}
+            """},
+    'DROP_VIEW_PAYMENT_ONE_YEAR': """
+          drop view if exists yfurman.view_payment_{{ execution_date.year }};
+     """
 }
 
 def get_phase_context(task_phase):
@@ -419,12 +422,11 @@ for phase in ('HUBS', 'LINKS', 'SATELLITES'):
         satellites = get_phase_context(phase)
         #all_satellites_loaded = DummyOperator(task_id="all_satellites_loaded", dag=dag)
 
+
 drop_view_payment_one_year = PostgresOperator(
-    task_id="drop_view_payment_one_year",
+    task_id='DROP_VIEW_PAYMENT_ONE_YEAR',
     dag=dag,
-    sql="""
-          drop view if exists yfurman.view_payment_{{ execution_date.year }};
-        """
+    sql=SQL_CONTEXT['DROP_VIEW_PAYMENT_ONE_YEAR']
 )
 
 view_payment_one_year >> hubs >> all_hubs_loaded >> links >> all_links_loaded >> satellites >> drop_view_payment_one_year
