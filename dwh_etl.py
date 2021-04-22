@@ -271,6 +271,7 @@ SQL_CONTEXT = {
                         from yfurman.dds_sat_user_details as a
                         join source_data as b
                         on a.USER_PK = b.USER_PK
+                        where  a.LOAD_DATE <= b.LOAD_DATE
                     ),
                     latest_records as (
                         select * from (
@@ -327,6 +328,7 @@ SQL_CONTEXT = {
                         from yfurman.dds_sat_pay_doc_details as a
                         join source_data as b
                         on a.PAY_DOC_PK = b.PAY_DOC_PK
+                        where  a.LOAD_DATE <= b.LOAD_DATE
                     ),
                     latest_records as (
                         select * from (
