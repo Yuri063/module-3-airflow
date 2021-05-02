@@ -119,7 +119,7 @@ load_payment_report_tmp_one_year = PostgresOperator(
     dag=dag,
     sql=SQL_CONTEXT['LOAD_PAYMENT_REPORT_TMP_ONE_YEAR']
 )
-
+"""
 for phase in ('DIMENSIONS', 'FACTS'):
     # Load DIMENSIONs    
     if phase == 'DIMENSIONs':
@@ -130,7 +130,9 @@ for phase in ('DIMENSIONS', 'FACTS'):
     elif phase == 'FACTS':
         facts = get_phase_context(phase) 
         all_facts_loaded = DummyOperator(task_id="all_facts_loaded", dag=dag)
-
+"""
+all_dims_loaded = DummyOperator(task_id="all_dims_loaded", dag=dag)
+all_facts_loaded = DummyOperator(task_id="all_facts_loaded", dag=dag)
 
 drop_payment_report_tmp_one_year = PostgresOperator(
     task_id='DROP_PAYMENT_REPORT_TMP_ONE_YEAR',
@@ -138,4 +140,6 @@ drop_payment_report_tmp_one_year = PostgresOperator(
     sql=SQL_CONTEXT['DROP_PAYMENT_REPORT_TMP_ONE_YEAR']
 )
 
-load_payment_report_tmp_one_year >> dims >> all_dims_loaded >> facts >> all_facts_loaded >>  drop_payment_report_tmp_one_year
+#load_payment_report_tmp_one_year >> dims >> all_dims_loaded >> facts >> all_facts_loaded >>  drop_payment_report_tmp_one_year
+
+load_payment_report_tmp_one_year >> get_phase_context('DIMENSIONS') >> all_dims_loaded >> get_phase_context('FACTS') >> all_facts_loaded >>  drop_payment_report_tmp_one_year
