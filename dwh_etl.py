@@ -366,6 +366,7 @@ default_args = {
     'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(seconds=120),
+    max_active_runs=1,
 }
 
 dag = DAG(
