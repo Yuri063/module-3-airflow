@@ -366,7 +366,6 @@ default_args = {
     'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(seconds=120),
-    max_active_runs=1,
 }
 
 dag = DAG(
@@ -374,6 +373,7 @@ dag = DAG(
     default_args=default_args,
     description='Data Warehouse ETL tasks',
     schedule_interval="0 0 1 1 *",
+    max_active_runs=1,
 )
 
 view_payment_one_year = PostgresOperator(
