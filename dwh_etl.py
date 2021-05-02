@@ -56,9 +56,9 @@ SQL_CONTEXT = {
                   cast(md5(nullif(concat_ws('||',
                     coalesce(nullif(upper(trim(cast(user_id as varchar))), ''), '^^'),
                     coalesce(nullif(upper(trim(cast(account as varchar))), ''), '^^'),
+                    coalesce(nullif(upper(trim(cast(billing_period as varchar))), ''), '^^'),
                     coalesce(nullif(upper(trim(cast(pay_doc_type as varchar))), ''), '^^'),
-                    coalesce(nullif(upper(trim(cast(pay_doc_num as varchar))), ''), '^^'),
-                    coalesce(nullif(upper(trim(cast(billing_period as varchar))), ''), '^^')
+                    coalesce(nullif(upper(trim(cast(pay_doc_num as varchar))), ''), '^^')                 
                   ), '^^||^^||^^||^^||^^')) as TEXT) as USER_ACCOUNT_BILLING_PAY_PK,
                   cast(md5(concat_ws('||',
                     coalesce(nullif(upper(trim(cast(phone as varchar))), ''), '^^')
