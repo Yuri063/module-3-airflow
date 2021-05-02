@@ -46,25 +46,39 @@ SQL_CONTEXT = {
                     left join yfurman.payment_report_dim_legal_type b on b.legal_type_key = a.legal_type
                     where b.legal_type_key is null;
             """,
-            'HUB_BILLING_PERIOD':  """
-
+            'DIM_DISTRICT':  """
+                    insert into yfurman.payment_report_dim_district(district_key)
+                    select distinct district as district_key 
+                    from yfurman.payment_report_tmp_{{ execution_date.year }} a
+                    left join yfurman.payment_report_dim_district b on b.district_key = a.district
+                    where b.district_key is null;
             """,
-            'HUB_PAY_DOC':  """
-
+            'DIM_REGISTRATION_YEAR':  """
+                    insert into yfurman.payment_report_dim_registration_year(registration_year_key)
+                    select distinct registration_year as registration_year_key 
+                    from yfurman.payment_report_tmp_{{ execution_date.year }} a
+                    left join yfurman.payment_report_dim_registration_year b on b.registration_year_key = a.registration_year
+                    where b.registration_year_key is null;
             """},
-    'LINKS': {
-            'LINK_USER_ACCOUNT_BILLING_PAY':  """
- 
-            """},
-    'SATELLITES': {
-            'SAT_USER_DETAILS':  """
-               
-            """,
-            'SAT_PAY_DETAILS':  """
-                
+    'FACTS': {
+            'REPORT_FACT':  """
+                    insert into yfurman.payment_report_fct(
+                                billing_year_id,
+                                legal_type_id,
+                                district_id,
+                                registration_year_id,
+                                is_vip,
+                                sum 
+                            )
+                    select biy.id, lt.id, d.id, ry.id, is_vip, raw.sum
+                    from yfurman.payment_report_tmp_{{ execution_date.year }} raw
+                    join yfurman.payment_report_dim_billing_year biy on raw.billing_year = biy.billing_year_key
+                    join yfurman.payment_report_dim_legal_type lt on raw.legal_type = lt.legal_type_key
+                    join yfurman.payment_report_dim_district d on raw.district = d.district_key
+                    join yfurman.payment_report_dim_registration_year ry on raw.registration_year = ry.registration_year_key; 
             """},
     'DROP_PAYMENT_REPORT_TMP_ONE_YEAR': """
-          --drop view if exists yfurman.view_payment_{{ execution_date.year }};
+          drop view if exists yfurman.payment_report_tmp_{{ execution_date.year }};
      """
 }
 
