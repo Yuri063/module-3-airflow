@@ -128,7 +128,7 @@ for phase in ('DIMENSIONS', 'FACTS'):
 
     # Load FACTs
     elif phase == 'FACTS':
-        facts = get_phase_context(phase)
+        facts = get_phase_context(phase) 
         all_facts_loaded = DummyOperator(task_id="all_facts_loaded", dag=dag)
 
 
