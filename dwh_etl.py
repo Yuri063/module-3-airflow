@@ -52,17 +52,14 @@ SQL_CONTEXT = {
                   cast(md5(nullif(concat_ws('||',
                     coalesce(nullif(upper(trim(cast(pay_doc_type as varchar))), ''), '^^'),
                     coalesce(nullif(upper(trim(cast(pay_doc_num as varchar))), ''), '^^')
-                  ), '^^||^^')) as TEXT) as PAY_DOC_PK,
+                  ), '^^||^^')) as TEXT) as PAY_DOC_PK,                  
                   cast(md5(nullif(concat_ws('||',
                     coalesce(nullif(upper(trim(cast(user_id as varchar))), ''), '^^'),
-                    coalesce(nullif(upper(trim(cast(account as varchar))), ''), '^^')
-                  ), '^^||^^')) as TEXT) as USER_ACCOUNT_PK,
-                  cast(md5(nullif(concat_ws('||',
                     coalesce(nullif(upper(trim(cast(account as varchar))), ''), '^^'),
                     coalesce(nullif(upper(trim(cast(pay_doc_type as varchar))), ''), '^^'),
                     coalesce(nullif(upper(trim(cast(pay_doc_num as varchar))), ''), '^^'),
                     coalesce(nullif(upper(trim(cast(billing_period as varchar))), ''), '^^')
-                  ), '^^||^^||^^||^^')) as TEXT) as ACCOUNT_BILLING_PAY_PK,
+                  ), '^^||^^||^^||^^||^^')) as TEXT) as USER_ACCOUNT_BILLING_PAY_PK,
                   cast(md5(concat_ws('||',
                     coalesce(nullif(upper(trim(cast(phone as varchar))), ''), '^^')
                   )) as TEXT) as USER_HASHDIFF,
@@ -93,8 +90,7 @@ SQL_CONTEXT = {
                   ACCOUNT_PK,
                   BILLING_PERIOD_PK,
                   PAY_DOC_PK,
-                  USER_ACCOUNT_PK,
-                  ACCOUNT_BILLING_PAY_PK,
+                  USER_ACCOUNT_BILLING_PAY_PK,
                   USER_HASHDIFF,
                   PAY_DOC_HASHDIFF
                 from hashed_columns
@@ -206,48 +202,25 @@ SQL_CONTEXT = {
                   );
             """},
     'LINKS': {
-            'LINK_USER_ACCOUNT':  """
-                  with records_to_insert as (
-                      select distinct 
-                          stg.USER_ACCOUNT_PK, 
-                          stg.USER_PK, stg.ACCOUNT_PK, 
-                          stg.LOAD_DATE, stg.RECORD_SOURCE
-                      from yfurman.view_payment_{{ execution_date.year }} as stg 
-                      left join yfurman.dds_link_user_account as tgt
-                      on stg.USER_ACCOUNT_PK = tgt.USER_ACCOUNT_PK
-                      where tgt.USER_ACCOUNT_PK is null		
-                  )
-                  insert into yfurman.dds_link_user_account (
-                      USER_ACCOUNT_PK,
-                      USER_PK, ACCOUNT_PK,
-                      LOAD_DATE, RECORD_SOURCE)
-                  (
-                      select 
-                          USER_ACCOUNT_PK,
-                          USER_PK, ACCOUNT_PK,
-                          LOAD_DATE, RECORD_SOURCE
-                      from records_to_insert
-                  );
-            """,
-            'LINK_ACCOUNT_BILLING_PAY':  """
+            'LINK_USER_ACCOUNT_BILLING_PAY':  """
                       with records_to_insert as (
                           select distinct 
-                              stg.ACCOUNT_BILLING_PAY_PK, 
-                              stg.ACCOUNT_PK, stg.BILLING_PERIOD_PK, stg.PAY_DOC_PK, 
+                              stg.USER_ACCOUNT_BILLING_PAY_PK, 
+                              stg.USER, stg.ACCOUNT_PK, stg.BILLING_PERIOD_PK, stg.PAY_DOC_PK, 
                               stg.LOAD_DATE, stg.RECORD_SOURCE
                           from yfurman.view_payment_{{ execution_date.year }} as stg 
-                          left join yfurman.dds_link_account_billing_pay as tgt
-                          on stg.ACCOUNT_BILLING_PAY_PK = tgt.ACCOUNT_BILLING_PAY_PK
-                          where tgt.ACCOUNT_BILLING_PAY_PK is null		
+                          left join yfurman.dds_link_user_account_billing_pay as tgt
+                          on stg.USER_ACCOUNT_BILLING_PAY_PK = tgt.USER_ACCOUNT_BILLING_PAY_PK
+                          where tgt.USER_ACCOUNT_BILLING_PAY_PK is null		
                       )
-                      insert into yfurman.dds_link_account_billing_pay (
-                          ACCOUNT_BILLING_PAY_PK,
-                          ACCOUNT_PK, BILLING_PERIOD_PK, PAY_DOC_PK,
+                      insert into yfurman.dds_link_user_account_billing_pay (
+                          USER_ACCOUNT_BILLING_PAY_PK,
+                          USER_PK, ACCOUNT_PK, BILLING_PERIOD_PK, PAY_DOC_PK,
                           LOAD_DATE, RECORD_SOURCE)
                       (
                           select 
-                              ACCOUNT_BILLING_PAY_PK,
-                              ACCOUNT_PK, BILLING_PERIOD_PK, PAY_DOC_PK,
+                              USER_ACCOUNT_BILLING_PAY_PK,
+                              USER_PK, ACCOUNT_PK, BILLING_PERIOD_PK, PAY_DOC_PK,
                               LOAD_DATE, RECORD_SOURCE
                           from records_to_insert
                       );
@@ -310,10 +283,10 @@ SQL_CONTEXT = {
                         from records_to_insert
                     );                  
             """,
-            'SAT_PAY_DOC_DETAILS':  """
+            'SAT_PAY_DETAILS':  """
                     with source_data as (
                         select 
-                            PAY_DOC_PK, PAY_DOC_HASHDIFF, 
+                            USER_ACCOUNT_BILLING_PAY_PK, PAY_DOC_HASHDIFF, 
                             pay_date, sum, 
                             EFFECTIVE_FROM, 
                             LOAD_DATE, RECORD_SOURCE
@@ -321,19 +294,19 @@ SQL_CONTEXT = {
                     ),
                     update_records as (
                         select 
-                            a.PAY_DOC_PK, a.PAY_DOC_HASHDIFF, 
+                            a.USER_ACCOUNT_BILLING_PAY_PK, a.PAY_DOC_HASHDIFF, 
                             a.pay_date, a.sum,
                             a.EFFECTIVE_FROM, 
                             a.LOAD_DATE, a.RECORD_SOURCE
-                        from yfurman.dds_sat_pay_doc_details as a
+                        from yfurman.dds_sat_pay_details as a
                         join source_data as b
-                        on a.PAY_DOC_PK = b.PAY_DOC_PK
+                        on a.USER_ACCOUNT_BILLING_PAY_PK = b.USER_ACCOUNT_BILLING_PAY_PK
                         where  a.LOAD_DATE <= b.LOAD_DATE
                     ),
                     latest_records as (
                         select * from (
-                            select PAY_DOC_PK, PAY_DOC_HASHDIFF, LOAD_DATE,
-                                case when rank() over (partition by PAY_DOC_PK order by LOAD_DATE desc) = 1
+                            select USER_ACCOUNT_BILLING_PAY_PK, PAY_DOC_HASHDIFF, LOAD_DATE,
+                                case when rank() over (partition by USER_ACCOUNT_BILLING_PAY_PK order by LOAD_DATE desc) = 1
                                     then 'Y' 
                                     else 'N'
                                 end as latest
@@ -343,24 +316,24 @@ SQL_CONTEXT = {
                     ),	
                     records_to_insert as (
                         select distinct 
-                            e.PAY_DOC_PK, e.PAY_DOC_HASHDIFF, 
+                            e.USER_ACCOUNT_BILLING_PAY_PK, e.PAY_DOC_HASHDIFF, 
                             e.pay_date, e.sum,
                             e.EFFECTIVE_FROM, 
                             e.LOAD_DATE, e.RECORD_SOURCE
                         from source_data as e
                         left join latest_records
                         on latest_records.PAY_DOC_HASHDIFF = e.PAY_DOC_HASHDIFF and
-                           latest_records.PAY_DOC_PK = e.PAY_DOC_PK
+                           latest_records.USER_ACCOUNT_BILLING_PAY_PK = e.USER_ACCOUNT_BILLING_PAY_PK
                         where latest_records.PAY_DOC_HASHDIFF is NULL
                     )	
-                    insert into yfurman.dds_sat_pay_doc_details (
-                        PAY_DOC_PK, PAY_DOC_HASHDIFF, 
+                    insert into yfurman.dds_sat_pay_details (
+                        USER_ACCOUNT_BILLING_PAY_PK, PAY_DOC_HASHDIFF, 
                         pay_date, sum, 
                         EFFECTIVE_FROM, 
                         LOAD_DATE, RECORD_SOURCE)
                     (
                         select 
-                            PAY_DOC_PK, PAY_DOC_HASHDIFF, 
+                            USER_ACCOUNT_BILLING_PAY_PK, PAY_DOC_HASHDIFF, 
                             pay_date, sum, 
                             EFFECTIVE_FROM, 
                             LOAD_DATE, RECORD_SOURCE
