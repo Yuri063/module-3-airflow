@@ -206,7 +206,7 @@ SQL_CONTEXT = {
                       with records_to_insert as (
                           select distinct 
                               stg.USER_ACCOUNT_BILLING_PAY_PK, 
-                              stg.USER, stg.ACCOUNT_PK, stg.BILLING_PERIOD_PK, stg.PAY_DOC_PK, 
+                              stg.USER_PK, stg.ACCOUNT_PK, stg.BILLING_PERIOD_PK, stg.PAY_DOC_PK, 
                               stg.LOAD_DATE, stg.RECORD_SOURCE
                           from yfurman.view_payment_{{ execution_date.year }} as stg 
                           left join yfurman.dds_link_user_account_billing_pay as tgt
